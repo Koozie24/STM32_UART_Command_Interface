@@ -100,6 +100,15 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+   // enable GPIOA CLock 
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+    //setup pa5 as output
+    //clear bit 11:10
+    GPIOA->MODER &= ~(3U << (5U * 2U));
+    //set to 01 as in refrence sheet
+    GPIOA->MODER |= (1U << (5U * 2U));
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -107,10 +116,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    // enable GPIOA CLock 
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
-    __NOP()
+    
+    //flip pin 5 bit between 1 and 0 high to low
+    GPIOA->ODR ^= (1U << 5U);
+    delay(1500000);
 
     /* USER CODE BEGIN 3 */
   }

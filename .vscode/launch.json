@@ -1,0 +1,27 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+"version": "0.2.0",
+  "configurations": [
+    {
+      "name": "STM32F401RE (Cortex-Debug / OpenOCD)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/blink.elf",
+      "servertype": "openocd",
+      "serverpath": "C:/xpack/openocd/bin/openocd.exe",
+      "searchDir": [
+          "C:/xpack/openocd/openocd/scripts"
+      ],
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32f4x.cfg"
+      ],
+      "device": "STM32F401RE",
+      "runToEntryPoint": "main",
+      "gdbPath": "C:/ST/STM32CubeCLT_1.19.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb.exe"
+    }
+  ]
+}

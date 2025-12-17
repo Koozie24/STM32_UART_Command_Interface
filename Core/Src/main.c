@@ -52,9 +52,7 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /*function to wait some number of 32 bit integer cpu cycles*/
 static void delay(volatile uint32_t n){
-  while(n--){
-    __NOP();
-  }
+  for(int i=0; i < n; i++){}
 }
 
 /* USER CODE END PFP */
@@ -62,6 +60,41 @@ static void delay(volatile uint32_t n){
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/*enable the clock registers of USART2 and GPIOA, if not enabled already*/
+void enable_clocks(){
+  //enable clock for usart2
+  if(!(RCC->APB1ENR & RCC_APB1ENR_USART2EN)) RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+  //enable clock for GPIOA (USART TX -> PA2 |||| RX->PA3)
+  if(!(RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN)) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+}
+
+/*Clears bits at MODER2 and then set to ob10 alternate config mode */
+void configure_usart2_tx_pin(){
+  //need to clear bit 4/5 3U == 0b11 so we shift 0b11 four bits left and get 0b110000 - where our pin bits are 4/5
+  //clear bits
+  GPIOA->MODER &= ~(3U << 4U);
+  //set to alternate function
+  GPIOA->MODER |= (2U << 4U);
+
+  //usart2 alternate function is AF7 and uses AFRL 0-7 AFRH 8-15 4 bits per pin
+  GPIOA->AFR[0] &= ~(0xF << 8U);
+  //set AF7 field
+  GPIOA->AFR[0] |= (7 << 8U);
+
+  //configure output type otyper to push pull for tx 
+
+  //pupdr - what voltage should the pin sit when not used - set no pull for tx
+
+  //ospeedr - output speed how fast are signals - medium speed to match baud
+}
+
+void configure_gpioa_led_pin(){
+  //setup pa5 as output
+  //clear bit 11:10
+  GPIOA->MODER &= ~(3U << (5U * 2U));
+  //set to 01 as in refrence sheet
+  GPIOA->MODER |= (1U << (5U * 2U));
+}
 /* USER CODE END 0 */
 
 /**
@@ -72,7 +105,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  enable_clocks();
+  configure_usart2_tx_pin();
+  configure_gpioa_led_pin();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -99,16 +134,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  enable_clocks();
+  configure_usart2_tx_pin();
+  configure_gpioa_led_pin();
 
-   // enable GPIOA CLock 
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
-    //setup pa5 as output
-    //clear bit 11:10
-    GPIOA->MODER &= ~(3U << (5U * 2U));
-    //set to 01 as in refrence sheet
-    GPIOA->MODER |= (1U << (5U * 2U));
-
+  //
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,10 +146,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    
-    //flip pin 5 bit between 1 and 0 high to low
-    GPIOA->ODR ^= (1U << 5U);
-    delay(1500000);
 
     /* USER CODE BEGIN 3 */
   }

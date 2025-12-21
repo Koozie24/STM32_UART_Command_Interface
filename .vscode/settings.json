@@ -1,23 +1,8 @@
 {
-    "makefile.configureOnOpen": false,
-    "C_Cpp.default.compilerPath": "c:\\mingw64\\bin\\gcc.exe",
-    "cmake.cmakePath": "cube-cmake",
-    "cmake.configureArgs": [
-        "-DCMAKE_COMMAND=cube-cmake"
-    ],
-    "cmake.preferredGenerators": [
-        "Ninja"
-    ],
-    "stm32cube-ide-clangd.path": "cube",
-    "stm32cube-ide-clangd.arguments": [
-        "starm-clangd",
-        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/13.3.1+st.9/bin/arm-none-eabi-gcc.exe",
-        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/13.3.1+st.9/bin/arm-none-eabi-g++.exe"
-    ],
     "makefile.launchConfigurations": [
         {
-            "cwd": "c:\\STM32\\F401RE\\baremetal_blink\\blink\\build",
-            "binaryPath": "c:\\STM32\\F401RE\\baremetal_blink\\blink\\build\\blink.elf",
+            "cwd": "/home/jake/dev/stm32/F401RE/baremetal_blink/blink/build",
+            "binaryPath": "/home/jake/dev/stm32/F401RE/baremetal_blink/blink/build/blink.elf",
             "binaryArgs": []
         }
     ]

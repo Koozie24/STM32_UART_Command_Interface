@@ -51,11 +51,13 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-  Pin_Port_Combo GREEN_LED = {9U, 'A'};
-  Pin_Port_Combo RED_LED = {8U, 'A'};
-  Pin_Port_Combo YELLOW_LED = {10U, 'A'};
-  Pin_Port_Combo WHITE_LED = {5U, 'B'};
-  Pin_Port_Combo BLUE_LED = {4U, 'B'};
+  Pin_Port_Combo leds[5] = {
+    {10U, 'A'}, //  yellow
+    {8U, 'A'}, //   red
+    {9U, 'A'}, //   green
+    {5U, 'B'}, //   white
+    {4U, 'B'} //    blue
+};
 
 /* USER CODE END PV */
 
@@ -156,95 +158,91 @@ void drive_pin(Pin_Port_Combo x){
 }
 
 void snake_leds(){
-  drive_pin(YELLOW_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
-  drive_pin(RED_LED);
-  delay(1000000);
-  drive_pin(RED_LED);
-  drive_pin(GREEN_LED);
-  delay(1000000);
-  drive_pin(GREEN_LED);
-  drive_pin(WHITE_LED);
-  delay(1000000);
-  drive_pin(WHITE_LED);
-  drive_pin(BLUE_LED);
-  delay(1000000);
-  drive_pin(BLUE_LED);
+
+  for(int i=0; i<5; i++){
+    if(i == 0) drive_pin(leds[i]); // toggle on first led
+    else{
+      drive_pin(leds[i-1]); // toggle off last led
+      drive_pin(leds[i]); // toggle on current led
+    }
+    delay(1000000);
+  }
+
+  drive_pin(leds[4]); // turn off last led
 }
+
 
 void reverse_snake_leds(){
-  drive_pin(BLUE_LED);
-  delay(1000000);
-  drive_pin(BLUE_LED);
-  drive_pin(WHITE_LED);
-  delay(1000000);
-  drive_pin(WHITE_LED);
-  drive_pin(GREEN_LED);
-  delay(1000000);
-  drive_pin(GREEN_LED);
-  drive_pin(RED_LED);
-  delay(1000000);
-  drive_pin(RED_LED);
-  drive_pin(YELLOW_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
+  for(int i=4; i>=0; i--){
+      if(i == 4) drive_pin(leds[i]); // toggle on first led
+      else{
+        drive_pin(leds[i+1]); // toggle off last led
+        drive_pin(leds[i]); // toggle on current led
+      }
+      delay(1000000);
+    }
+
+    drive_pin(leds[0]); // turn off last led
 }
 
+
 void alternate_leds(){
-  drive_pin(YELLOW_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
-  drive_pin(BLUE_LED);
-  delay(1000000);
-  drive_pin(BLUE_LED);
-  drive_pin(RED_LED);
-  delay(1000000);
-  drive_pin(RED_LED);
-  drive_pin(WHITE_LED);
-  delay(1000000);
-  drive_pin(WHITE_LED);
-  drive_pin(GREEN_LED);
-  delay(1000000);
-  drive_pin(GREEN_LED);
+  int front = 0;
+  int back = 4;
+  int alternate = 0; // flips each time if even left, if odd, right
+
+
+  while(front <= back){
+    if(!alternate){ //if 0 do front of array
+      drive_pin(leds[front]);
+      front++;
+    }
+    else{//if not zero go to back of array
+      drive_pin(leds[back]);
+      back--;
+    }
+
+    alternate % 2 ? alternate++ : alternate--; //flip alternate
+    delay(1000000);
+  }
+
+  //turn off leds
+  for(int i = 0; i < 5; i++){
+    drive_pin(leds[i]);
+  }
 }
 
 void one_by_one(){
-  drive_pin(YELLOW_LED);
-  delay(1000000);
-  drive_pin(RED_LED);
-  delay(1000000);
-  drive_pin(GREEN_LED);
-  delay(1000000);
-  drive_pin(WHITE_LED);
-  delay(1000000);
-  drive_pin(BLUE_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
-  drive_pin(BLUE_LED);
-  drive_pin(RED_LED);
-  drive_pin(WHITE_LED);
-  drive_pin(GREEN_LED);
+
+  for(int i=0; i < 5; i++){
+    drive_pin(leds[i]);
+    delay(1000000);
+  }
+  for(int i=0; i < 5; i++){
+    drive_pin(leds[i]);
+  }
   delay(1000000);
 }
 
 void reverse_one_by_one(){
-  drive_pin(BLUE_LED);
+  for(int i=4; i >= 0; i--){
+    drive_pin(leds[i]);
+    delay(1000000);
+  }
+  for(int i=4; i >= 0; i--){
+    drive_pin(leds[i]);
+  }
   delay(1000000);
-  drive_pin(WHITE_LED);
-  delay(1000000);
-  drive_pin(GREEN_LED);
-  delay(1000000);
-  drive_pin(RED_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
-  delay(1000000);
-  drive_pin(YELLOW_LED);
-  drive_pin(BLUE_LED);
-  drive_pin(RED_LED);
-  drive_pin(WHITE_LED);
-  drive_pin(GREEN_LED);
-  delay(1000000); 
+} 
+
+void police(){
+  int red = 1;
+  int blue = 4;
+
+  drive_pin(leds[red]);
+  delay(500000);
+  drive_pin(leds[blue]);
+  delay(500000);
 }
 /* USER CODE END 0 */
 
@@ -254,7 +252,6 @@ void reverse_one_by_one(){
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
   enable_clocks();
   configure_usart2_tx_pin();
@@ -284,13 +281,15 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    //snake_leds();
-
-    //reverse_snake_leds();
-
-    //alternate_leds();
+    snake_leds();
+    delay(1000000);
+    reverse_snake_leds();
+    delay(1000000);
+    alternate_leds();
+    delay(1000000);
     one_by_one();
     reverse_one_by_one();
+    //police();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

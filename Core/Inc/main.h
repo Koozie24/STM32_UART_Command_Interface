@@ -78,12 +78,22 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin LL_GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define LD4_Pin LL_GPIO_PIN_8
+#define LD4_GPIO_Port GPIOA
+#define LD5_Pin LL_GPIO_PIN_9
+#define LD5_GPIO_Port GPIOA
+#define LD3_Pin LL_GPIO_PIN_10
+#define LD3_GPIO_Port GPIOA
 #define TMS_Pin LL_GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin LL_GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin LL_GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define LD7_Pin LL_GPIO_PIN_4
+#define LD7_GPIO_Port GPIOB
+#define LD6_Pin LL_GPIO_PIN_5
+#define LD6_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */

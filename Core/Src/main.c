@@ -91,7 +91,8 @@ void enable_clocks(void){
   if(!(RCC->AHB1ENR & RCC_AHB1ENR_GPIOBEN)) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 }
 
-/* Clears bits at MODER2 and then set to ob10 alternate config mode */
+/* Configure GPIO pins for USART2 TX
+Clears bits at MODER2 and then set to ob10 alternate config mode */
 void configure_usart2_tx_pin(void){
   // PA2 for TX || PA3 for RX
   // register &= ~(mask << (pin * bits per pin)) clear field
@@ -118,6 +119,22 @@ void configure_usart2_tx_pin(void){
   GPIOA->OSPEEDR &= ~(3U << 4U);
   // set to medium speed 0b01 == 1
   GPIOA->OSPEEDR |= (1U << 4U);
+}
+
+/*configure the gpio pins for USART2 RX*/
+void configure_usart2_rx_pin(void){ //PA3
+  GPIOA->MODER &= ~(3U << 6U); //clear bits
+  GPIOA->MODER |= (2U << 6U); //set to alternate function
+
+  GPIOA->AFR[0] &= ~(15U << 12U);
+  GPIOA->AFR[0] |= (7U << 12U); //set af7 field
+
+  GPIOA->OTYPER &= ~(1U << 3U); //set push pull for pin 3
+
+  GPIOA->PUPDR &= ~(3U << 6U); // set no pull for rx
+
+  GPIOA->OSPEEDR &= ~(3U << 6U);
+  GPIOA->OSPEEDR |= (1U << 6U); // set medium speed
 }
 
 void configure_gpioa_led_pins(void){

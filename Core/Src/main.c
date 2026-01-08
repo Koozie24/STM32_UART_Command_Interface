@@ -76,16 +76,6 @@ void init_systick(void){
 // declare tick counter to 0 32 bit integer can store something like 49 days worth of ticks before reset to 0
 volatile uint32_t number_ticks = 0;
 
-/* handler function to increment number of ticks*/
-//void SysTick_Handler(void){
-  //number_ticks++;
-//}
-
-/* function to wait some number of 32 bit integer cpu cycles*/
-static void delay(volatile uint32_t n){
-  for(volatile int i=0; i < n; i++){}
-}
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

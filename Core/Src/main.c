@@ -200,76 +200,111 @@ void snake_leds(void){
 
 
 void reverse_snake_leds(void){
-  for(int i=4; i>=0; i--){
-      if(i == 4) drive_pin(leds[i]); // toggle on first led
-      else{
-        drive_pin(leds[i+1]); // toggle off last led
-        drive_pin(leds[i]); // toggle on current led
-      }
-      delay(1000000);
-    }
+  static uint32_t step = 0;
+  static int i = 4;
 
-    drive_pin(leds[0]); // turn off last led
+  if((number_ticks - step) < 1000) return;
+  step = number_ticks;
+
+  if(i == 4) {
+    drive_pin(leds[i]);
+    i--;
+  }
+  else if(i < 4 && i > -1){
+    drive_pin(leds[i+1]);
+    drive_pin(leds[i]);
+    i--;
+  }
+  else if(i < 0){
+   drive_pin(leds[0]);
+    i = 4;
+  }
 }
 
 
 void alternate_leds(void){
-  int front = 0;
-  int back = 4;
-  int alternate = 0; // flips each time if even left, if odd, right
+  static uint32_t step = 0;
 
+  if((number_ticks - step) < 1000) return;
+  step = number_ticks;
+  static int front = 0;
+  static int back = 4;
+  static int alternate = 0;
 
-  while(front <= back){
-    if(!alternate){ //if 0 do front of array
+  if(front <= back){
+    if(!alternate){
       drive_pin(leds[front]);
       front++;
     }
-    else{//if not zero go to back of array
+    else{
       drive_pin(leds[back]);
       back--;
     }
 
-    alternate = !alternate; //flip alternate
-    delay(1000000);
+    alternate = !alternate;
   }
-
-  //turn off leds
-  for(int i = 0; i < 5; i++){
-    drive_pin(leds[i]);
+  else{
+    for(int i=0; i < 5; i++){
+      drive_pin(leds[i]);
+    }
+    front = 0;
+    back = 4;
+    alternate = 0;
   }
 }
 
 void one_by_one(void){
+  static uint32_t step = 0;
+  if((number_ticks - step) < 1000) return;
+  number_ticks = step;
 
-  for(int i=0; i < 5; i++){
-    drive_pin(leds[i]);
-    delay(1000000);
+  static int i = 0;
+  if(i < 5){
+    drive_pin(leds[i++]);
   }
-  for(int i=0; i < 5; i++){
-    drive_pin(leds[i]);
+  else{
+    for(int j=0; j < 5; j++){
+      drive_pin(leds[j]);
+      i = 0;
+    }
   }
-  delay(1000000);
 }
 
 void reverse_one_by_one(void){
-  for(int i=4; i >= 0; i--){
-    drive_pin(leds[i]);
-    delay(1000000);
+  static uint32_t step = 0;
+  if((number_ticks - step) < 1000) return;
+  number_ticks = step;
+
+  static int i = 4;
+  if(i >= 0){
+    drive_pin(leds[i--]);
   }
-  for(int i=4; i >= 0; i--){
-    drive_pin(leds[i]);
+  else{
+    for(int j=4; j >= 0; j--){
+      drive_pin(leds[j]);
+      i = 4;
+    }
   }
-  delay(1000000);
 } 
 
 void police(void){
+
+  static uint32_t step = 0;
+  if((number_ticks - step) < 200) return;
+  number_ticks = step;
+
   int red = 1;
   int blue = 4;
+  static int alternate = 0;
 
-  drive_pin(leds[red]);
-  delay(500000);
-  drive_pin(leds[blue]);
-  delay(500000);
+  if(alternate == 0) {
+    drive_pin(leds[red]);
+    alternate++;
+  }
+  else {
+    drive_pin(leds[blue]);
+    alternate--;
+  }
 }
 /* USER CODE END 0 */
 
@@ -311,19 +346,11 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-   snake_leds();
-    
     //snake_leds();
-    //delay(1000000);
-    /*
-    reverse_snake_leds();
-    delay(1000000);
-    alternate_leds();
-    delay(1000000);
-    one_by_one();
-    reverse_one_by_one();
-    */
-    //police();
+    //reverse_snake_leds();
+    //alternate_leds();
+    //reverse_one_by_one();
+    police();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

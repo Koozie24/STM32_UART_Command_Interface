@@ -1,31 +1,4 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 
 // struct to store a pins number and port char
 typedef struct {
@@ -33,26 +6,12 @@ typedef struct {
   char port_char;
 }Pin_Port_Combo; 
 
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 // define HSI speed of 16MHz
 #define CPU_CLOCK_HZ   (16000000U)
 #define PCLK1_HZ       (16000000U)       
 #define BAUD_RATE      (115200U)
 #define SYSTICK_HZ     (1000U)
 
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
   Pin_Port_Combo leds[5] = {
     {10U, 'A'}, //  yellow
     {8U, 'A'}, //   red
@@ -61,10 +20,6 @@ typedef struct {
     {4U, 'B'} //    blue
 };
 
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
 void init_systick(void){
   // calculate num cycles per tick
   SysTick->LOAD = (CPU_CLOCK_HZ / SYSTICK_HZ) - 1;
@@ -76,11 +31,6 @@ void init_systick(void){
 
 // declare tick counter to 0 32 bit integer can store something like 49 days worth of ticks before reset to 0
 volatile uint32_t number_ticks = 0;
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 
 /* enable the clock registers of USART2 and GPIOA, if not enabled already*/
 void enable_clocks(void){
@@ -371,7 +321,6 @@ void instructions(void){
     iter++;
   }
 }
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -389,27 +338,7 @@ int main(void)
   enable_usart2();
 
   instructions();
-  //uint32_t stepper = number_ticks;
-
-  /* USER CODE END 1 */
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-  //
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  
   while (1)
   {
     //say_hi();
@@ -420,15 +349,10 @@ int main(void)
     //alternate_leds();
     //reverse_one_by_one();
     //police();
-    /* USER CODE BEGIN 3 */
+
   }
-  /* USER CODE END 3 */
+
 }
-
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.

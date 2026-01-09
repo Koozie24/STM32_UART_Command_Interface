@@ -483,15 +483,16 @@ void display_led_pattern_name(uint8_t pattern){
     case 6:
       text = "You started LED Pattern: Police\r\n";
       break;
+    default: 
+      break;
   }
   send_char_array_to_putc(text);
 }
 
 void input_command_handler(char cmd, LED_STATE *led_pattern){
   int cmd_as_int = (int)(cmd - '0');
-  uint8_t is_active = led_pattern->active_flag; // get a safe copy of active flag to pass into functions
 
-  if(!is_active && cmd_as_int < 7 && cmd_as_int > 0){ //command recieved for an led pattern and no patterns active currently
+  if(!led_pattern->active_flag && cmd_as_int < 7 && cmd_as_int > 0){ //command recieved for an led pattern and no patterns active currently
     switch(cmd_as_int){
       case 1:
         led_pattern->active_flag = 1;
@@ -517,11 +518,14 @@ void input_command_handler(char cmd, LED_STATE *led_pattern){
         led_pattern->active_flag = 1;
         led_pattern->current_p = POLICE;
         break;
+      default:
+        break;
     }
+    uint8_t current_pattern = led_pattern->current_p; //get snapshot to of pattern to pass into function safer maybe?
     display_last_cmd(cmd);
-    display_led_pattern_name(led_pattern->current_p);
+    display_led_pattern_name(current_pattern);
   }
-  else if(is_active && cmd_as_int == 7){
+  else if(led_pattern->active_flag && cmd_as_int == 7){
     led_pattern->active_flag = 0;
     led_pattern->current_p = NONE;
     reset_all_leds();
@@ -531,7 +535,6 @@ void input_command_handler(char cmd, LED_STATE *led_pattern){
     if(cmd_as_int == 7 && led_pattern->current_p == NONE) cmd_stop_without_pattern(); //display entered stop while nothing is running and inform them options
     else if(cmd_as_int > 0 && cmd_as_int < 7 && led_pattern->active_flag == 1) cmd_new_pattern_without_stopping_old(cmd); // display entered new pattern without stopping pattern already running
     else some_other_invalid_cmd_input(cmd);// some unknown issue and echo command
-    //something wrong - must have eneterd stop and nothing is running OR entered a led pattern without stopping the led pattern currently running
   }
   
 }

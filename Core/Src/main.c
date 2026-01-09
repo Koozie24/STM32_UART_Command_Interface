@@ -1,3 +1,8 @@
+/*To run on ACM1 use picocom in terminal: 
+
+  picocom -b 115200 /dev/ttyACM1
+  
+*/
 #include "main.h"
 
 // struct to store a pins number and port char

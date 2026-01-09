@@ -23,3 +23,16 @@ The project focuses on understanding how UART hardware works at a low level and 
 - Set led blink speed
 - Set led blink pattern
 - Something else - more leds/some other action/control
+
+## Completed:
+-  Enabled GPIO and UART2 pins
+-  Successfully sending char data over TX on UART2
+-  Setup 6 LED patterns 
+-  LED's timing off HSI clock
+
+## TO DO:
+-  Recieve some data on RX
+-  Handle rx_cmd
+-  Stop/start led patterns based off rx
+     - interrupt based on command
+     - adjust logic so time step happens in while loop not individual function

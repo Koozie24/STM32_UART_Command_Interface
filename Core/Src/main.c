@@ -1,7 +1,7 @@
 /*To run on ACM1 use picocom in terminal: 
 
   picocom -b 115200 /dev/ttyACM1
-  
+
 */
 #include "main.h"
 
@@ -10,6 +10,22 @@ typedef struct {
   uint8_t pin_num;
   char port_char;
 }Pin_Port_Combo; 
+
+// enum for naming convention to int mapping of led patterns
+typedef enum {
+  NONE,
+  SNAKE,
+  REVERSE_SNAKE,
+  ALTERNATE,
+  ONE_BY_ONE,
+  REVERSE_ONE_BY_ONE,
+  POLICE
+} Pattern;
+
+typedef struct {
+  Pattern current_p;
+  uint8_t active_flag;
+}LED_STATE;
 
 // define HSI speed of 16MHz
 #define CPU_CLOCK_HZ   (16000000U)
@@ -171,11 +187,27 @@ void drive_pin(Pin_Port_Combo x){
   if(x.port_char == 'B') GPIOB->ODR ^= (1U << x.pin_num);
 }
 
+/*function loops through leds struct and turns resets bits on all gpio led pins*/
+void reset_all_leds(void){
+  int num_leds = sizeof(leds) / sizeof(leds[0]);
+
+  for(int i=0; i < num_leds; i++){
+    if(leds[i].port_char == 'A') GPIOA->ODR &= ~(1U << leds[i].pin_num);
+    if(leds[i].port_char == 'B') GPIOB->ODR &= ~(1U << leds[i].pin_num);
+  }
+}
+
 /* function goes through leds' one by one turning them on then off, using the HSI for sysclock*/
-void snake_leds(void){
+void snake_leds(uint8_t active){
   // declare persistant variables 
   static uint32_t step = 0;
   static int i = 0;
+
+  if(!active){
+    step = number_ticks;
+    i = 0;
+    return;
+  }
 
   //if not one second passed
   if((number_ticks - step) < 1000) return;
@@ -195,9 +227,15 @@ void snake_leds(void){
   }
 }
 
-void reverse_snake_leds(void){
+void reverse_snake_leds(uint8_t active){
   static uint32_t step = 0;
   static int i = 4;
+
+  if(!active){
+    step = number_ticks;
+    i = 4;
+    return;
+  }
 
   if((number_ticks - step) < 1000) return;
   step = number_ticks;
@@ -217,14 +255,23 @@ void reverse_snake_leds(void){
   }
 }
 
-void alternate_leds(void){
+void alternate_leds(uint8_t active){
   static uint32_t step = 0;
-
-  if((number_ticks - step) < 1000) return;
-  step = number_ticks;
   static int front = 0;
   static int back = 4;
   static int alternate = 0;
+
+  if(!active){
+    step = number_ticks;
+    front = 0;
+    back = 4;
+    alternate = 0;
+    return;
+  }
+
+  if((number_ticks - step) < 1000) return;
+  step = number_ticks;
+
 
   if(front <= back){
     if(!alternate){
@@ -248,12 +295,19 @@ void alternate_leds(void){
   }
 }
 
-void one_by_one(void){
+void one_by_one_leds(uint8_t active){
   static uint32_t step = 0;
+  static int i = 0;
+
+  if(!active){
+    step = number_ticks;
+    i = 0;
+    return;
+  }
+
   if((number_ticks - step) < 1000) return;
   number_ticks = step;
 
-  static int i = 0;
   if(i < 5){
     drive_pin(leds[i++]);
   }
@@ -265,12 +319,19 @@ void one_by_one(void){
   }
 }
 
-void reverse_one_by_one(void){
+void reverse_one_by_one_leds(uint8_t active){
   static uint32_t step = 0;
+  static int i = 4;
+
+   if(!active){
+    step = number_ticks;
+    i = 4;
+    return;
+  }
+
   if((number_ticks - step) < 1000) return;
   number_ticks = step;
 
-  static int i = 4;
   if(i >= 0){
     drive_pin(leds[i--]);
   }
@@ -282,15 +343,20 @@ void reverse_one_by_one(void){
   }
 } 
 
-void police(void){
+void police_leds(uint8_t active){
   static uint32_t step = 0;
-  if((number_ticks - step) < 200) return;
-  number_ticks = step;
-
   int red = 1;
   int blue = 4;
   static int alternate = 0;
 
+  if(!active){
+    step = number_ticks;
+    alternate = 0;
+    return;
+  }
+  if((number_ticks - step) < 200) return;
+  number_ticks = step;
+ 
   if(alternate == 0) {
     drive_pin(leds[red]);
     alternate++;
@@ -301,13 +367,34 @@ void police(void){
   }
 }
 
+/*function sends a charcter over tx by polling transmit data register, when ready writes 8 bits data to data register*/
 void usart2_putc(char c){
   while(!(USART2->SR & (1U << 7U))) {};
-  USART2->DR = c;
+  USART2->DR = c; 
 }
 
+/*function recieves a character over rx by polling read if data register data is ready to be read (1) and then reads the bits from data register*/
+int usart2_getch(char *rx_c){
+  if(USART2->SR & (1U << 5U)){
+    *rx_c = USART2->DR;
+    return 1;
+  }
+  else return 0;
+}
+
+void send_char_array_to_putc(const char text[]){
+  int iter = 0;
+  char c = text[iter];
+  while(c != '\0'){
+    c = text[iter];
+
+    usart2_putc(c);
+    iter++;
+  }
+}
+/*function prints some instructions to terminal screen using putc*/
 void instructions(void){
-  const char start_instructs[] = "\x1B[2J\x1B[H"
+  const char start_instructs[] =
   "Hello! Input a command to control the LED's:\r\n"
   "1: Snake\r\n"
   "2: Reverse Snake\r\n"
@@ -315,16 +402,138 @@ void instructions(void){
   "4: 1-by-1\r\n"
   "5: Reverse 1-by-1\r\n"
   "6: Police\r\n"
-  "7: Stop Something\r\n\0";
+  "7: Stop Current\r\n\0";
   
-  int iter = 0;
-  char c = start_instructs[iter];
-  while(c != '\0'){
-    c = start_instructs[iter];
+  send_char_array_to_putc(start_instructs);
+}
 
-    usart2_putc(c);
-    iter++;
+/*function reads in terminal clear screen character sequence on usart2_putc*/
+void clear_screen(void){
+  const char clr_seq[] = "\x1B[2J\x1B[H";
+  send_char_array_to_putc(clr_seq);
+}
+
+void display_last_cmd(char cmd){
+  const char text[] = "You entered command: ";
+
+  send_char_array_to_putc(text);
+
+
+  usart2_putc(cmd);
+  usart2_putc('\r');
+  usart2_putc('\n');
+}
+
+void cmd_stop_without_pattern(void){
+  clear_screen();
+  const char text[] = "You entered the command: 7 to stop an LED pattern. No pattern is currently running. \r\nYou must start a new LED pattern (1-6).\r\n\r\n\r\n";
+
+  send_char_array_to_putc(text);
+
+  instructions();
+}
+
+void cmd_new_pattern_without_stopping_old(char cmd){
+  clear_screen();
+  display_last_cmd(cmd);
+  const char text[] = "\r\nYou tried to start a new pattern without stopping the one already running. \r\nYou must stop the current LED pattern (7).\r\n\r\n\r\n";
+
+  send_char_array_to_putc(text);
+
+  instructions();
+}
+
+void some_other_invalid_cmd_input(char cmd){
+  clear_screen();
+  display_last_cmd(cmd);
+  const char text[] = "\r\nYour input was not valid. If there is an LED pattern currently running, you may stop it (7) and start a new pattern (1-6). \r\n"
+  " If there is not an LED pattern currently running, input a number that corresponds to the pattenr that you want to see (1-6).\r\n\r\n\r\n";
+
+  send_char_array_to_putc(text);
+
+  instructions();
+}
+
+void instructions_after_stop_leds(void){
+  const char text[] = "You have stopped the LED Pattern. Please pick a new pattern to run.\r\n\r\n\r\n";
+
+  send_char_array_to_putc(text);
+
+  instructions();
+}
+
+void display_led_pattern_name(uint8_t pattern){
+  const char *text = "";
+  switch (pattern){
+    case 1:
+      text = "You started LED Pattern: Snake\r\n";
+      break;
+    case 2:
+      text = "You started LED Pattern: Reverse Snake\r\n";
+      break;
+    case 3:
+      text = "You started LED Pattern: Alternate\r\n";
+      break;
+    case 4:
+      text= "You started LED Pattern: 1-by-1\r\n";
+      break;
+    case 5:
+      text = "You started LED Pattern: Reverse 1-by-1\r\n";
+      break;
+    case 6:
+      text = "You started LED Pattern: Police\r\n";
+      break;
   }
+  send_char_array_to_putc(text);
+}
+
+void input_command_handler(char cmd, LED_STATE *led_pattern){
+  int cmd_as_int = (int)(cmd - '0');
+  uint8_t is_active = led_pattern->active_flag; // get a safe copy of active flag to pass into functions
+
+  if(!is_active && cmd_as_int < 7 && cmd_as_int > 0){ //command recieved for an led pattern and no patterns active currently
+    switch(cmd_as_int){
+      case 1:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = SNAKE;
+        break;
+      case 2:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = REVERSE_SNAKE;
+        break;
+      case 3:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = ALTERNATE;
+        break;
+      case 4:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = ONE_BY_ONE;
+        break;
+      case 5:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = REVERSE_ONE_BY_ONE;
+        break;
+      case 6:
+        led_pattern->active_flag = 1;
+        led_pattern->current_p = POLICE;
+        break;
+    }
+    display_last_cmd(cmd);
+    display_led_pattern_name(led_pattern->current_p);
+  }
+  else if(is_active && cmd_as_int == 7){
+    led_pattern->active_flag = 0;
+    led_pattern->current_p = NONE;
+    reset_all_leds();
+    instructions_after_stop_leds();
+  }
+  else{
+    if(cmd_as_int == 7 && led_pattern->current_p == NONE) cmd_stop_without_pattern(); //display entered stop while nothing is running and inform them options
+    else if(cmd_as_int > 0 && cmd_as_int < 7 && led_pattern->active_flag == 1) cmd_new_pattern_without_stopping_old(cmd); // display entered new pattern without stopping pattern already running
+    else some_other_invalid_cmd_input(cmd);// some unknown issue and echo command
+    //something wrong - must have eneterd stop and nothing is running OR entered a led pattern without stopping the led pattern currently running
+  }
+  
 }
 
 /**
@@ -341,19 +550,43 @@ int main(void)
   configure_gpioa_led_pins();
   configure_gpiob_led_pins();
   enable_usart2();
+  //Pattern LED_PATTERNS;
 
   instructions();
-  
+  LED_STATE state_tracker = {.current_p=NONE, .active_flag=0};
   while (1)
   {
-    //say_hi();
-    /* USER CODE END WHILE */
-      //if not one second passed
-    //snake_leds();
-    //reverse_snake_leds();
-    //alternate_leds();
-    //reverse_one_by_one();
-    //police();
+
+    if(state_tracker.active_flag){ // if active flag true, call led function again
+      switch(state_tracker.current_p){
+        case(SNAKE):
+          snake_leds(state_tracker.active_flag);
+          break;
+        case(REVERSE_SNAKE):
+          reverse_snake_leds(state_tracker.active_flag);
+          break;
+        case(ALTERNATE):
+          alternate_leds(state_tracker.active_flag);
+          break;
+        case(ONE_BY_ONE):
+          one_by_one_leds(state_tracker.active_flag);
+          break;
+        case(REVERSE_ONE_BY_ONE):
+          reverse_one_by_one_leds(state_tracker.active_flag);
+          break;
+        case(POLICE):
+          police_leds(state_tracker.active_flag);
+          break;
+        case(NONE):
+          break;
+      }
+    }
+
+    char recieved;
+    if(usart2_getch(&recieved)){ //poll for a command
+      clear_screen();
+      input_command_handler(recieved, &state_tracker);
+    }
 
   }
 

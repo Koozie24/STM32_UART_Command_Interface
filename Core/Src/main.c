@@ -40,8 +40,8 @@ typedef struct {
 // define HSI speed of 16MHz
 #define CPU_CLOCK_HZ   (16000000U)
 #define PCLK1_HZ       (16000000U)       
-#define BAUD_RATE        (115200U)
-#define SYSTICK_HZ         (1000U)
+#define BAUD_RATE      (115200U)
+#define SYSTICK_HZ     (1000U)
 
 /* USER CODE END PD */
 
@@ -154,7 +154,7 @@ void enable_usart2(void){
   
   USART2->CR1 &= ~(1U << 13U); //clear UE bits
 
-  uint32_t uartdiv = ((PCLK1_HZ * 16U) + (BAUD_RATE / 2U)) / BAUD_RATE;   // set divider - number of clock tickets usart get per one bit time
+  uint16_t uartdiv = ((PCLK1_HZ) + (BAUD_RATE / 2U)) / BAUD_RATE;   // set divider - number of clock tickets usart get per one bit time
 
   USART2->BRR = (((uartdiv / 16U) << 4U) | ((uartdiv % 16U) << 0U));    // configure baud rate reg
 
@@ -328,7 +328,6 @@ void reverse_one_by_one(void){
 } 
 
 void police(void){
-
   static uint32_t step = 0;
   if((number_ticks - step) < 200) return;
   number_ticks = step;
@@ -346,6 +345,32 @@ void police(void){
     alternate--;
   }
 }
+
+void usart2_putc(char c){
+  while(!(USART2->SR & (1U << 7U))) {};
+  USART2->DR = c;
+}
+
+void instructions(void){
+  const char start_instructs[] = "\x1B[2J\x1B[H"
+  "Hello! Input a command to control the LED's:\r\n"
+  "1: Snake\r\n"
+  "2: Reverse Snake\r\n"
+  "3: Alternate LEDs\r\n"
+  "4: 1-by-1\r\n"
+  "5: Reverse 1-by-1\r\n"
+  "6: Police\r\n"
+  "7: Stop Something\r\n\0";
+  
+  int iter = 0;
+  char c = start_instructs[iter];
+  while(c != '\0'){
+    c = start_instructs[iter];
+
+    usart2_putc(c);
+    iter++;
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -358,9 +383,12 @@ int main(void)
   enable_clocks();
   init_systick();
   configure_usart2_tx_pin();
+  configure_usart2_rx_pin();
   configure_gpioa_led_pins();
   configure_gpiob_led_pins();
+  enable_usart2();
 
+  instructions();
   //uint32_t stepper = number_ticks;
 
   /* USER CODE END 1 */
@@ -384,13 +412,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    //say_hi();
     /* USER CODE END WHILE */
-
+      //if not one second passed
     //snake_leds();
     //reverse_snake_leds();
     //alternate_leds();
     //reverse_one_by_one();
-    police();
+    //police();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

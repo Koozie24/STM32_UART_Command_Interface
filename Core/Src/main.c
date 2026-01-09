@@ -39,8 +39,9 @@ typedef struct {
 /* USER CODE BEGIN PD */
 // define HSI speed of 16MHz
 #define CPU_CLOCK_HZ   (16000000U)
-#define BAUD_RATE (115200U)
-#define SYSTICK_HZ (1000U)
+#define PCLK1_HZ       (16000000U)       
+#define BAUD_RATE        (115200U)
+#define SYSTICK_HZ         (1000U)
 
 /* USER CODE END PD */
 
@@ -137,6 +138,40 @@ void configure_usart2_rx_pin(void){ //PA3
   GPIOA->OSPEEDR |= (1U << 6U); // set medium speed
 }
 
+void enable_usart2(void){
+  /*
+  PA2/PA3 for USART2 TX/RX respective
+  https://vivonomicon.com/2020/06/28/bare-metal-stm32-programming-part-10-uart-communication/
+
+  pclk1 = 16,000,000
+  baud = 115200
+
+  one bit takes 1/115200 seconds
+  meaning we have 16000000/115200 = 138.888.. clock cycles per bit or each USART bit takes 138.88 plck1 clock cycles
+
+  usart divier = mantissa (whole num) + (fraction/16) 
+  */
+  
+  USART2->CR1 &= ~(1U << 13U); //clear UE bits
+
+  uint32_t uartdiv = ((PCLK1_HZ * 16U) + (BAUD_RATE / 2U)) / BAUD_RATE;   // set divider - number of clock tickets usart get per one bit time
+
+  USART2->BRR = (((uartdiv / 16U) << 4U) | ((uartdiv % 16U) << 0U));    // configure baud rate reg
+
+  USART2->CR1 &= ~(1U << 12U);  // reset word bits
+  USART2->CR1 &= ~(1U << 15U);  // reset oversampling bits
+  USART2->CR2 &= ~(3U << 12U);  // reset stop bits to one stop bit
+  USART2->CR1 &= ~(1U << 10U);  // disable parity 
+  USART2->CR1 &= ~(1U << 2U);   // reset rx
+  USART2->CR1 &= ~(1U << 3U);   // reset tx
+
+
+  USART2->CR1 |= (1U << 2U);    // reciever enabled (1) at bit 2
+  USART2->CR1 |= (1U << 3U);    // Transmit enabled (1) at bit 
+
+  USART2->CR1 |= (1U << 13U);   // UE 1 is enable and it is bit 13
+}
+
 void configure_gpioa_led_pins(void){
 
   // setup pa5 as output (onboard led)
@@ -205,7 +240,6 @@ void snake_leds(void){
   }
 }
 
-
 void reverse_snake_leds(void){
   static uint32_t step = 0;
   static int i = 4;
@@ -227,7 +261,6 @@ void reverse_snake_leds(void){
     i = 4;
   }
 }
-
 
 void alternate_leds(void){
   static uint32_t step = 0;
